@@ -1,0 +1,5 @@
+app: app/hello
+arguments:
+  - --user-data-dir="User Data"
+  - --disable-gpu
+  - --no-sandbox
