@@ -1,0 +1,64 @@
+name: Build on Push to release
+
+on:
+  push:
+    branches: 
+      - master
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        include:
+          - os: ubuntu-latest
+            output-name: ${GITHUB_REPOSITORY##*/}-linux
+          - os: macOS-latest
+            output-name: ${GITHUB_REPOSITORY##*/}-mac
+          - os: windows-latest
+            output-name: ${GITHUB_REPOSITORY##*/}-windows.exe
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Setup Dart VM
+        uses: vanesyan/setup-dart@v1
+
+      - name: Build for windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          pub.bat get
+          dart.exe tool/grind.dart clean build
+        shell: bash
+
+      - name: Build for non-windows
+        if: matrix.os != 'windows-latest'
+        run: |
+          pub get
+          dart tool/grind.dart clean build
+        shell: bash
+
+      - name: Prepare release files
+        run: |
+          mkdir -p ${GITHUB_REPOSITORY##*/}/app/
+          pwd
+          ls -l build/
+          cp build/* ${GITHUB_REPOSITORY##*/}/
+          ls -l .
+          cp config.yaml ${GITHUB_REPOSITORY##*/}/
+          ls -l ${GITHUB_REPOSITORY##*/}/
+          7z a -tzip ${{ matrix.output-name }}.zip ${GITHUB_REPOSITORY##*/} -bb3
+          ls -l .
+        shell: bash
+
+      - uses: xresloader/upload-to-github-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          file: "*.zip"
+          tags: true
+          draft: false
