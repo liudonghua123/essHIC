@@ -52,6 +52,7 @@ jobs:
           cp config.yaml ${GITHUB_REPOSITORY##*/}/
           ls -l ${GITHUB_REPOSITORY##*/}/
           7z a -tzip ${{ matrix.output-name }}.zip ${GITHUB_REPOSITORY##*/} -bb3
+          pwd
           ls -l .
         shell: bash
 
